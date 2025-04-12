@@ -29,3 +29,18 @@ def get_llm():
         return ChatOpenAI(api_key=Config.OPENAI_API_KEY, model="gpt-4o") # default to gpt-4o
     else: # Use Ollama
         return OllamaLLM(model=Config.OLLAMA_MODEL, base_url=Config.OLLAMA_URL) 
+    
+
+def summarize_text(text):
+    prompt = "Summarize the following AI partnership announcement in one sentence:"
+
+    if Config.USE_OPENAI:
+        llm = get_llm()
+        response = llm.invoke(prompt + "\n" + text)
+        response = response.content
+    else:
+        llm = get_llm()     
+        response = llm.invoke(prompt + "\n" + text)
+
+    return response
+
