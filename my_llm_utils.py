@@ -44,3 +44,10 @@ def summarize_text(text):
 
     return response
 
+# Validate Link (basic check)
+def validate_link(url):
+    try:
+        result = urlparse(url)
+        return all([result.scheme, result.netloc])
+    except Exception:
+        return False
