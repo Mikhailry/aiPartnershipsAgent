@@ -29,7 +29,26 @@ def get_llm():
     
 
 def summarize_text(text):
-    prompt = "Summarize the following AI partnership announcement in one sentence:"
+    prompt = f"""
+    Summarize the following AI partnership announcement in one sentence:
+    """
+
+    if Config.USE_OPENAI:
+        llm = get_llm()
+        response = llm.invoke(prompt + "\n" + text)
+        response = response.content
+    else:
+        llm = get_llm()     
+        response = llm.invoke(prompt + "\n" + text)
+
+    return response
+
+def summarize_text_partnership(text, partner1, partner2):
+    prompt = f"""
+    Summarize the following AI partnership announcement in one sentence:
+    {partner1} and {partner2}
+    {text}
+    """
 
     if Config.USE_OPENAI:
         llm = get_llm()
