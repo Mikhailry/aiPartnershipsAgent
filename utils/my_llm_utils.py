@@ -19,13 +19,34 @@ class Config:
     USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
 
 # Initialize LLMs
-def get_llm():
-    if Config.USE_OPENAI:  # Use OpenAI
-        if not Config.OPENAI_API_KEY: # Check if API key is set
-            raise ValueError("OpenAI API key not found") 
-        return ChatOpenAI(api_key=Config.OPENAI_API_KEY, model="gpt-4o") # default to gpt-4o
-    else: # Use Ollama
-        return OllamaLLM(model=Config.OLLAMA_MODEL, base_url=Config.OLLAMA_URL) 
+def get_llm(use_openai: bool = None, model_name: str = None, base_url: str = None):
+    """
+    Get an LLM instance based on specified parameters.
+    
+    Args:
+        use_openai (bool, optional): Whether to use OpenAI. If None, uses Config.USE_OPENAI
+        model_name (str, optional): 
+            - For OpenAI: model name (e.g., "gpt-4", "gpt-3.5-turbo")
+            - For Ollama: model name (e.g., "llama2", "mistral", "phi")
+        base_url (str, optional): Base URL for Ollama. If None, uses Config.OLLAMA_URL
+    
+    Returns:
+        LLM instance (ChatOpenAI or OllamaLLM)
+    """
+    # Use provided parameters or fall back to config values
+    use_openai = use_openai if use_openai is not None else Config.USE_OPENAI
+    base_url = base_url or Config.OLLAMA_URL
+    
+    if use_openai:  # Use OpenAI
+        if not Config.OPENAI_API_KEY:
+            raise ValueError("OpenAI API key not found")
+        # Use provided model name or default to gpt-4
+        model = model_name or "gpt-4"
+        return ChatOpenAI(api_key=Config.OPENAI_API_KEY, model=model)
+    else:  # Use Ollama
+        # Use provided model name or fall back to config
+        model = model_name or Config.OLLAMA_MODEL
+        return OllamaLLM(model=model, base_url=base_url)
 
 def summarize(prompt, text):
     
@@ -44,20 +65,6 @@ def summarize(prompt, text):
 
     return response  
 
-def summarize_text(text):
-    prompt = f"""
-    Summarize the following AI partnership announcement in one sentence:
-    """
-
-    if Config.USE_OPENAI:
-        llm = get_llm()
-        response = llm.invoke(prompt + "\n" + text)
-        response = response.content
-    else:
-        llm = get_llm()     
-        response = llm.invoke(prompt + "\n" + text)
-
-    return response
 
 def summarize_text_partnership(text, partner1, partner2):
     prompt = f"""

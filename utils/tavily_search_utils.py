@@ -4,26 +4,26 @@ import os
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 TAVILY_MAX_RESULTS = int(os.getenv("TAVILY_MAX_RESULTS", 1))  # Default to 1 if not set
 
-def search_tavily(query, max_results=TAVILY_MAX_RESULTS):
-    """
-    Search Tavily for a given query.
+# def search_tavily(query, max_results=TAVILY_MAX_RESULTS):
+#     """
+#     Search Tavily for a given query.
     
-    Args:
-        query (str): The search query.
+#     Args:
+#         query (str): The search query.
     
-    Returns:
-        dict: The response from Tavily API.
-    """
-    if not TAVILY_API_KEY:
-        raise ValueError("Tavily API key not found")
+#     Returns:
+#         dict: The response from Tavily API.
+#     """
+#     if not TAVILY_API_KEY:
+#         raise ValueError("Tavily API key not found")
 
-    # Initialize Tavily client
-    tavily_client = TavilyClient(TAVILY_API_KEY)
-    search_response = tavily_client.search(query, max_results=max_results)
-    return search_response
+#     # Initialize Tavily client
+#     tavily_client = TavilyClient(TAVILY_API_KEY)
+#     search_response = tavily_client.search(query, max_results=max_results)
+#     return search_response
 
-
-def web_search(query, max_results=TAVILY_MAX_RESULTS):
+# web search using tavily api - basic or advanced search depth
+def web_search(query, max_results=TAVILY_MAX_RESULTS, search_depth="advanced"):  
   """
     Performs a web search using the Tavily API.
 
@@ -33,6 +33,10 @@ def web_search(query, max_results=TAVILY_MAX_RESULTS):
 
     Args:
         q (str): The search query string to be processed by Tavily's search engine.
+        max_results (int): The maximum number of results to return.
+        search_depth (str): The depth of the search. Can be "basic" or "advanced".
+        
+        "Advanced" search depth is more comprehensive but slower and more expensive.
 
     Returns:
         dict: A dictionary containing the search results from Tavily. The results typically include:
@@ -51,7 +55,7 @@ def web_search(query, max_results=TAVILY_MAX_RESULTS):
       # Perform the search
       response = client.search(
           query=query,
-          search_depth="advanced",  # or "basic" depending on your needs
+          search_depth=search_depth,  
           max_results=max_results
       )
       return response
