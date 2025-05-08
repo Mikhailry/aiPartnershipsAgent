@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 from langchain_ollama import OllamaLLM
 from langchain_openai import ChatOpenAI
-
+import pandas as pd
 from urllib.parse import urlparse
 
 # Load environment variables
@@ -17,6 +17,31 @@ class Config:
     OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434") # default URL
     MAX_RETRIES = 3 # default retries
     USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+
+def read_csv_with_output_path(csv_path: str, output_path: str = None) -> tuple[pd.DataFrame, str]:
+    """
+    Read a CSV file and generate an output path if not provided.
+    
+    Args:
+        csv_path (str): Path to input CSV file
+        output_path (str, optional): Path to save updated CSV. If None, creates a new filename
+    
+    Returns:
+        tuple[pd.DataFrame, str]: DataFrame containing the CSV data and the output path
+    """
+    # If no output path is provided, create one based on the input filename
+    if not output_path:
+        dirname, filename = os.path.split(csv_path)
+        base, ext = os.path.splitext(filename)
+        output_path = os.path.join(dirname, f"{base}_updated{ext}")
+    
+    # Read the CSV file
+    try:
+        df = pd.read_csv(csv_path)
+        return df, output_path
+    except Exception as e:
+        print(f"Error reading CSV: {e}")
+        raise
 
 # Initialize LLMs
 def get_llm(use_openai: bool = None, model_name: str = None, base_url: str = None):
@@ -83,10 +108,4 @@ def summarize_text_partnership(text, partner1, partner2):
 
     return response
 
-# Validate Link (basic check)
-def validate_link(url):
-    try:
-        result = urlparse(url)
-        return all([result.scheme, result.netloc])
-    except Exception:
-        return False
+
