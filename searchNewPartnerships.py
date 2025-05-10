@@ -18,6 +18,77 @@ def get_existing_partnerships(csv_path):
     
     return existing_pairs
 
+def validate_partnership(partner1, partner2, content):
+    """Validate if the content describes an AI partnership between the two companies using LLM"""
+    from utils.my_llm_utils import get_llm
+    
+    # Initialize LLM
+    #llm = get_llm(use_openai=False, model_name="gemma3:1b")
+    llm = get_llm(use_openai=True)
+    
+    # Create validation prompt
+    prompt = f"""
+    You are a validation assistant. Answer these three questions about the text below:
+    1. Does this text describe a partnership between {partner1} and {partner2}?
+    2. Is this partnership related to AI or machine learning?
+    3. Are {partner1} and {partner2} real companies?
+
+    Answer with ONLY "yes" or "no" for each question, separated by commas.
+    Example: yes,yes,yes
+    Example: no,yes,no
+
+    Text:
+    {content}
+    """
+    
+    try:
+        # Get response from LLM
+        response = llm.invoke(prompt)
+        
+        # Convert response to string and clean up
+        response_str = response.content if hasattr(response, 'content') else str(response)
+        response_str = response_str.strip().lower()
+        
+        print(f"Debug - Raw LLM response: {response_str}")  # Debug line
+        
+        # Parse the yes/no responses
+        try:
+            # Split by comma and clean up each answer
+            answers = [ans.strip() for ans in response_str.split(',')]
+            if len(answers) != 3:
+                return False, f"Invalid response format. Expected 3 answers, got {len(answers)}"
+            
+            # Convert yes/no to boolean
+            is_valid_partnership = answers[0] == 'yes'
+            is_ai_related = answers[1] == 'yes'
+            are_real_companies = answers[2] == 'yes'
+            
+            # Check all conditions
+            is_valid = is_valid_partnership and is_ai_related and are_real_companies
+            
+            # Generate rejection reason
+            if not is_valid:
+                reasons = []
+                if not is_valid_partnership:
+                    reasons.append("not a valid partnership")
+                if not is_ai_related:
+                    reasons.append("not AI-related")
+                if not are_real_companies:
+                    reasons.append("companies not verified as real")
+                rejection_reason = ", ".join(reasons)
+            else:
+                rejection_reason = "passed"
+            
+            return is_valid, rejection_reason
+            
+        except Exception as parse_error:
+            return False, f"Failed to parse yes/no responses: {str(parse_error)}"
+        
+    except Exception as e:
+        error_msg = f"Error in LLM validation: {str(e)}"
+        print(error_msg)
+        return False, error_msg
+
 def search_new_partnerships(existing_pairs, days_back=30):
     """Search for new AI partnerships using Tavily"""
     new_partnerships = []
@@ -74,22 +145,28 @@ def search_new_partnerships(existing_pairs, days_back=30):
                     # Check if this partnership is new
                     pair = frozenset([partner1.lower().strip(), partner2.lower().strip()])
                     if pair not in existing_pairs:
-                        # Extract date
-                        date = extract_date_from_text(content)
-                        
-                        # Add to new partnerships
-                        new_partnerships.append({
-                            'partner1': partner1,
-                            'partner2': partner2,
-                            'When announced': date,
-                            'Link': url,
-                            'raw_content': content
-                        })
-                        
-                        # Add to existing pairs to avoid duplicates
-                        existing_pairs.add(pair)
-                        
-                        print(f"Found new partnership: {partner1} and {partner2}")
+                        # Validate the partnership using LLM
+                        is_valid, rejection_reason = validate_partnership(partner1, partner2, content)
+                        if is_valid:
+                            # Extract date
+                            date = extract_date_from_text(content)
+                            
+                            # Add to new partnerships
+                            new_partnerships.append({
+                                'partner1': partner1,
+                                'partner2': partner2,
+                                'When announced': date,
+                                'Link': url,
+                                'raw_content': content
+                            })
+                            
+                            # Add to existing pairs to avoid duplicates
+                            existing_pairs.add(pair)
+                            
+                            print(f"Found new partnership: {partner1} and {partner2}")
+                        else:
+                            print(f"Skipped partnership: {partner1} and {partner2}")
+                            print(f"Reason: {rejection_reason}")
         
         # Add a small delay between queries to avoid rate limits
         time.sleep(1)
@@ -101,7 +178,7 @@ def extract_companies_from_text(text):
     from utils.my_llm_utils import get_llm
     
     # Initialize LLM
-    llm = get_llm()
+    llm = get_llm(use_openai=False, model_name="gemma3:1b")
     
     # Create prompt for company extraction
     prompt = f"""
