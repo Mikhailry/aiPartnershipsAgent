@@ -89,7 +89,7 @@ def validate_partnership(partner1, partner2, content):
         print(error_msg)
         return False, error_msg
 
-def search_new_partnerships(existing_pairs, days_back=30):
+def search_new_partnerships(existing_pairs, time_range="month"):
     """Search for new AI partnerships using Tavily"""
     new_partnerships = []
     
@@ -110,7 +110,7 @@ def search_new_partnerships(existing_pairs, days_back=30):
     # Process each search query
     for query in search_queries:
         print(f"\nSearching with query: {query}")
-        search_results = web_search(query, max_results=5)
+        search_results = web_search(query, max_results=5, time_range=time_range)
         
         if not search_results or not search_results.get('results'):
             continue
