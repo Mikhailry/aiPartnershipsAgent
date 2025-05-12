@@ -1,0 +1,11 @@
+# The script split_csv_by_rows.py only requires the Python standard library (csv, os)
+# Ensure you are using Python 3.7+ for full csv module support
+langchain>=0.1.0
+langchain-ollama>=0.0.1
+langchain-openai>=0.0.2
+python-dotenv>=1.0.0
+pandas>=2.0.0
+tavily-python>=0.2.0
+crawl4ai>=0.1.0
+nest-asyncio>=1.5.8
+wandb>=0.16.0
